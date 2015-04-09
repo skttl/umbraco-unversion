@@ -154,8 +154,8 @@ namespace Our.Umbraco.UnVersion.Services
             {
                 var reader = command.ExecuteReader();
 
-                while (reader.Read())
-                {
+                while (reader.Read()) 
+                { 
                     var versionId = reader.GetGuid(0);
                     var versionDate = reader.GetDateTime(1);
                     var published = reader.GetBoolean(2);
@@ -163,9 +163,8 @@ namespace Our.Umbraco.UnVersion.Services
 
                     readerIndex++;
 
-                    if (published || newest || readerIndex <= configEntry.MaxCount ||
-                        (DateTime.Now - versionDate).Days < configEntry.MaxDays)
-
+                    var daysDiff = (DateTime.Now - versionDate).Days;
+                    if (published || newest || (daysDiff < configEntry.MaxDays && readerIndex <= configEntry.MaxCount))
                         versionsToKeep.Add("'" + versionId.ToString("D") + "'");
                 }
 

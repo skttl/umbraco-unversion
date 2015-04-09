@@ -62,6 +62,11 @@ namespace Our.Umbraco.UnVersion
 
     public class UnVersionConfigEntry
     {
+        public UnVersionConfigEntry()
+        {
+            MaxDays = MaxCount = int.MaxValue;
+        }
+
         public string DocTypeAlias { get; set; }
         public string RootXPath { get; set; }
         public int MaxDays { get; set; }
