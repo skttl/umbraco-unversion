@@ -1,0 +1,22 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Our.Umbraco.UnVersion</id>
+    <version>0.0.0</version>
+    <title>UnVersion for Umbraco</title>
+    <description>A content un-versioning package for Umbraco</description>
+    <authors>Matt Brailsford</authors>
+    <projectUrl>https://github.com/mattbrailsford/UnVersion</projectUrl>
+    <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <copyright>Copyright (c) Outfield Digital Ltd 2013</copyright>
+    <summary />
+    <language />
+    <dependencies>
+      <dependency id="UmbracoCms.Core" version="7.1.4" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\MIT-LICENSE.txt" target="MIT-LICENSE.txt" />
+  </files>
+</package>
