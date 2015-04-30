@@ -22,7 +22,7 @@
   ****************************************
   -->
   <PropertyGroup>
-    <PackageVersion>2.0</PackageVersion>
+    <PackageVersion>2.1</PackageVersion>
     <ProjectName>Our.Umbraco.UnVersion</ProjectName>
   </PropertyGroup>
 
