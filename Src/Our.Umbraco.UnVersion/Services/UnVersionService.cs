@@ -56,49 +56,49 @@ namespace Our.Umbraco.UnVersion.Services
                 if (!isValid)
                     continue;
 
-                var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["umbracoDbDSN"].ConnectionString);
+              using ( var connection = new SqlConnection( ConfigurationManager.ConnectionStrings[ "umbracoDbDSN" ].ConnectionString ) ) {
                 connection.Open();
 
-                var vesionsToKeep = VersionsToKeep(content.Id, configEntry, connection);
-                var versionsToKeepString = string.Join(",", vesionsToKeep);
+                var vesionsToKeep = VersionsToKeep( content.Id, configEntry, connection );
+                var versionsToKeepString = string.Join( ",", vesionsToKeep );
 
-                if (Logger.IsDebugEnabled)
-                    Logger.Debug("Keeping versions " + versionsToKeepString);
+                if ( Logger.IsDebugEnabled )
+                  Logger.Debug( "Keeping versions " + versionsToKeepString );
 
-                var sqlStrings = new List<string>
-                {
-                    string.Format(@"
+                var sqlStrings = new List<string> {
+                  string.Format( @"
                                 DELETE
                                 FROM	cmsPreviewXml
                                 WHERE	nodeId = {0} AND versionId NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString),
+                    content.Id,
+                    versionsToKeepString ),
 
-                    string.Format(@"
+                  string.Format( @"
                                 DELETE
                                 FROM	cmsPropertyData
                                 WHERE	contentNodeId = {0} AND versionId  NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString),
+                    content.Id,
+                    versionsToKeepString ),
 
 
-                    string.Format(@"
+                  string.Format( @"
                                 DELETE
                                 FROM	cmsContentVersion
                                 WHERE	contentId = {0} AND versionId  NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString),
+                    content.Id,
+                    versionsToKeepString ),
 
-                    string.Format(@"
+                  string.Format( @"
                                 DELETE
                                 FROM	cmsDocument 
                                 WHERE	nodeId = {0} AND versionId  NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString)
+                    content.Id,
+                    versionsToKeepString )
                 };
 
-                foreach (var sqlString in sqlStrings)
-                    ExecuteSql(sqlString, connection);
+                foreach ( var sqlString in sqlStrings )
+                  ExecuteSql( sqlString, connection );
+              }
             }
         }
 
