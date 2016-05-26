@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
+using System.Data.SqlServerCe;
 using System.Reflection;
 using log4net;
 using umbraco;
@@ -56,62 +58,70 @@ namespace Our.Umbraco.UnVersion.Services
                 if (!isValid)
                     continue;
 
-                using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings[ "umbracoDbDSN" ].ConnectionString)) 
+                var connStr = ConfigurationManager.ConnectionStrings["umbracoDbDSN"];
+
+                var conn = connStr.ProviderName.Contains("SqlServerCe")
+                    ? (IDbConnection)new SqlCeConnection(connStr.ConnectionString)
+                    : (IDbConnection)new SqlConnection(connStr.ConnectionString);
+           
+                conn.Open();
+
+                var vesionsToKeep = VersionsToKeep( content.Id, configEntry, conn);
+                var versionsToKeepString = string.Join( ",", vesionsToKeep );
+
+                if (Logger.IsDebugEnabled)
+                    Logger.Debug("Keeping versions " + versionsToKeepString);
+
+                var sqlStrings = new List<string> {
+                    string.Format(@"
+                                DELETE
+                                FROM	cmsPreviewXml
+                                WHERE	nodeId = {0} AND versionId NOT IN ({1})",
+                    content.Id,
+                    versionsToKeepString),
+
+                    string.Format(@"
+                                DELETE
+                                FROM	cmsPropertyData
+                                WHERE	contentNodeId = {0} AND versionId  NOT IN ({1})",
+                    content.Id,
+                    versionsToKeepString),
+
+
+                    string.Format(@"
+                                DELETE
+                                FROM	cmsContentVersion
+                                WHERE	contentId = {0} AND versionId  NOT IN ({1})",
+                    content.Id,
+                    versionsToKeepString),
+
+                    string.Format(@"
+                                DELETE
+                                FROM	cmsDocument 
+                                WHERE	nodeId = {0} AND versionId  NOT IN ({1})",
+                    content.Id,
+                    versionsToKeepString)
+                };
+
+                foreach (var sqlString in sqlStrings)
                 {
-                    connection.Open();
-
-                    var vesionsToKeep = VersionsToKeep( content.Id, configEntry, connection );
-                    var versionsToKeepString = string.Join( ",", vesionsToKeep );
-
-                    if (Logger.IsDebugEnabled)
-                        Logger.Debug("Keeping versions " + versionsToKeepString);
-
-                    var sqlStrings = new List<string> {
-                        string.Format(@"
-                                    DELETE
-                                    FROM	cmsPreviewXml
-                                    WHERE	nodeId = {0} AND versionId NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString),
-
-                        string.Format(@"
-                                    DELETE
-                                    FROM	cmsPropertyData
-                                    WHERE	contentNodeId = {0} AND versionId  NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString),
-
-
-                        string.Format(@"
-                                    DELETE
-                                    FROM	cmsContentVersion
-                                    WHERE	contentId = {0} AND versionId  NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString),
-
-                        string.Format(@"
-                                    DELETE
-                                    FROM	cmsDocument 
-                                    WHERE	nodeId = {0} AND versionId  NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString)
-                    };
-
-                    foreach (var sqlString in sqlStrings)
-                    {
-                        ExecuteSql(sqlString, connection);
-                    }
+                    ExecuteSql(sqlString, conn);
                 }
+
+                conn.Close();
+                conn.Dispose();
             }
         }
 
 
-        void ExecuteSql(string sql, SqlConnection connection)
+        void ExecuteSql(string sql, IDbConnection connection)
         {
             if (Logger.IsDebugEnabled)
                 Logger.Debug(sql);
 
-            var command = new SqlCommand(sql, connection);
+            var command = connection.CreateCommand();
+            command.CommandType = CommandType.Text;
+            command.CommandText = sql;
 
             if (_catchSqlExceptions)
             {
@@ -130,7 +140,7 @@ namespace Our.Umbraco.UnVersion.Services
             }
         }
 
-        private IEnumerable<string> VersionsToKeep(int contentId, UnVersionConfigEntry configEntry, SqlConnection connection)
+        private IEnumerable<string> VersionsToKeep(int contentId, UnVersionConfigEntry configEntry, IDbConnection connection)
         {
             // Get a list of all versions
             // TODO: Need to find a better way to do this, but SQL CE 4 doesn't allow sub queries
@@ -148,7 +158,9 @@ namespace Our.Umbraco.UnVersion.Services
             if (Logger.IsDebugEnabled)
                 Logger.Debug(sql);
 
-            var command = new SqlCommand(sql, connection);
+            var command = connection.CreateCommand();
+            command.CommandType = CommandType.Text;
+            command.CommandText = sql;
 
             var versionsToKeep = new List<string>();
             var readerIndex = 0;
