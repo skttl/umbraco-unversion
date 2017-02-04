@@ -63,11 +63,11 @@ namespace Our.Umbraco.UnVersion.Services
                 var conn = connStr.ProviderName.Contains("SqlServerCe")
                     ? (IDbConnection)new SqlCeConnection(connStr.ConnectionString)
                     : (IDbConnection)new SqlConnection(connStr.ConnectionString);
-           
+
                 conn.Open();
 
-                var vesionsToKeep = VersionsToKeep( content.Id, configEntry, conn);
-                var versionsToKeepString = string.Join( ",", vesionsToKeep );
+                var vesionsToKeep = VersionsToKeep(content.Id, configEntry, conn);
+                var versionsToKeepString = string.Join(",", vesionsToKeep);
 
                 if (Logger.IsDebugEnabled)
                     Logger.Debug("Keeping versions " + versionsToKeepString);
@@ -112,7 +112,6 @@ namespace Our.Umbraco.UnVersion.Services
                 conn.Dispose();
             }
         }
-
 
         void ExecuteSql(string sql, IDbConnection connection)
         {
@@ -169,8 +168,8 @@ namespace Our.Umbraco.UnVersion.Services
             {
                 var reader = command.ExecuteReader();
 
-                while (reader.Read()) 
-                { 
+                while (reader.Read())
+                {
                     var versionId = reader.GetGuid(0);
                     var versionDate = reader.GetDateTime(1);
                     var published = reader.GetBoolean(2);

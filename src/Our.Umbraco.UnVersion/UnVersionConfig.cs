@@ -51,7 +51,7 @@ namespace Our.Umbraco.UnVersion
                     if (xmlConfigEntry.Attributes["maxCount"] != null)
                         configEntry.MaxCount = Convert.ToInt32(xmlConfigEntry.Attributes["maxCount"].Value);
 
-                    if(!ConfigEntries.ContainsKey(configEntry.DocTypeAlias))
+                    if (!ConfigEntries.ContainsKey(configEntry.DocTypeAlias))
                         ConfigEntries.Add(configEntry.DocTypeAlias, new List<UnVersionConfigEntry>());
 
                     ConfigEntries[configEntry.DocTypeAlias].Add(configEntry);
