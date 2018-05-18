@@ -60,56 +60,57 @@ namespace Our.Umbraco.UnVersion.Services
 
                 var connStr = ConfigurationManager.ConnectionStrings["umbracoDbDSN"];
 
-                var conn = connStr.ProviderName.Contains("SqlServerCe")
+                using (var conn = connStr.ProviderName.Contains("SqlServerCe")
                     ? (IDbConnection)new SqlCeConnection(connStr.ConnectionString)
-                    : (IDbConnection)new SqlConnection(connStr.ConnectionString);
-
-                conn.Open();
-
-                var vesionsToKeep = VersionsToKeep(content.Id, configEntry, conn);
-                var versionsToKeepString = string.Join(",", vesionsToKeep);
-
-                if (Logger.IsDebugEnabled)
-                    Logger.Debug("Keeping versions " + versionsToKeepString);
-
-                var sqlStrings = new List<string> {
-                    string.Format(@"
-                                DELETE
-                                FROM	cmsPreviewXml
-                                WHERE	nodeId = {0} AND versionId NOT IN ({1})",
-                    content.Id,
-                    versionsToKeepString),
-
-                    string.Format(@"
-                                DELETE
-                                FROM	cmsPropertyData
-                                WHERE	contentNodeId = {0} AND versionId  NOT IN ({1})",
-                    content.Id,
-                    versionsToKeepString),
-
-
-                    string.Format(@"
-                                DELETE
-                                FROM	cmsContentVersion
-                                WHERE	contentId = {0} AND versionId  NOT IN ({1})",
-                    content.Id,
-                    versionsToKeepString),
-
-                    string.Format(@"
-                                DELETE
-                                FROM	cmsDocument 
-                                WHERE	nodeId = {0} AND versionId  NOT IN ({1})",
-                    content.Id,
-                    versionsToKeepString)
-                };
-
-                foreach (var sqlString in sqlStrings)
+                    : (IDbConnection)new SqlConnection(connStr.ConnectionString))
                 {
-                    ExecuteSql(sqlString, conn);
-                }
 
-                conn.Close();
-                conn.Dispose();
+                    conn.Open();
+
+                    var vesionsToKeep = VersionsToKeep(content.Id, configEntry, conn);
+                    var versionsToKeepString = string.Join(",", vesionsToKeep);
+
+                    if (Logger.IsDebugEnabled)
+                        Logger.Debug("Keeping versions " + versionsToKeepString);
+
+                    var sqlStrings = new List<string> {
+                        string.Format(@"
+                                    DELETE
+                                    FROM	cmsPreviewXml
+                                    WHERE	nodeId = {0} AND versionId NOT IN ({1})",
+                        content.Id,
+                        versionsToKeepString),
+
+                        string.Format(@"
+                                    DELETE
+                                    FROM	cmsPropertyData
+                                    WHERE	contentNodeId = {0} AND versionId  NOT IN ({1})",
+                        content.Id,
+                        versionsToKeepString),
+
+
+                        string.Format(@"
+                                    DELETE
+                                    FROM	cmsContentVersion
+                                    WHERE	contentId = {0} AND versionId  NOT IN ({1})",
+                        content.Id,
+                        versionsToKeepString),
+
+                        string.Format(@"
+                                    DELETE
+                                    FROM	cmsDocument 
+                                    WHERE	nodeId = {0} AND versionId  NOT IN ({1})",
+                        content.Id,
+                        versionsToKeepString)
+                    };
+
+                    foreach (var sqlString in sqlStrings)
+                    {
+                        ExecuteSql(sqlString, conn);
+                    }
+
+                    conn.Close();
+                }
             }
         }
 
