@@ -167,24 +167,25 @@ namespace Our.Umbraco.UnVersion.Services
 
             try
             {
-                var reader = command.ExecuteReader();
+                using (var reader = command.ExecuteReader())
+		    {
+			    while (reader.Read())
+			    {
+				    var versionId = reader.GetGuid(0);
+				    var versionDate = reader.GetDateTime(1);
+				    var published = !reader.IsDBNull(2) && reader.GetBoolean(2);
+				    var newest = reader.GetBoolean(3);
 
-                while (reader.Read())
-                {
-                    var versionId = reader.GetGuid(0);
-                    var versionDate = reader.GetDateTime(1);
-                    var published = reader.GetBoolean(2);
-                    var newest = reader.GetBoolean(3);
+				    readerIndex++;
 
-                    readerIndex++;
+				    var daysDiff = (DateTime.Now - versionDate).Days;
+				    if (published || newest || (daysDiff < configEntry.MaxDays && readerIndex <= configEntry.MaxCount))
+					    versionsToKeep.Add("'" + versionId.ToString("D") + "'");
+			    }
 
-                    var daysDiff = (DateTime.Now - versionDate).Days;
-                    if (published || newest || (daysDiff < configEntry.MaxDays && readerIndex <= configEntry.MaxCount))
-                        versionsToKeep.Add("'" + versionId.ToString("D") + "'");
-                }
-
-                reader.Close();
-                reader.Dispose();
+			    reader.Close();
+			    reader.Dispose();
+		    }
             }
             catch (Exception ex)
             {
