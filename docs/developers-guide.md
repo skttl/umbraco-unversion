@@ -30,5 +30,5 @@ To define a new unversion rule, create an `<add>` element with the following att
 
 ### Useful Links
 
-* [Source Code](https://github.com/leekelleher/umbraco-unversion)
+* [Source Code](https://github.com/umco/umbraco-unversion)
 * [Our Umbraco Project Page](https://our.umbraco.org/projects/website-utilities/unversion/)
