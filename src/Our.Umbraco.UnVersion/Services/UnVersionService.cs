@@ -174,7 +174,7 @@ namespace Our.Umbraco.UnVersion.Services
 				    var versionId = reader.GetGuid(0);
 				    var versionDate = reader.GetDateTime(1);
 				    var published = !reader.IsDBNull(2) && reader.GetBoolean(2);
-				    var newest = reader.GetBoolean(3);
+				    var newest = !reader.IsDBNull(3) && reader.GetBoolean(3);
 
 				    readerIndex++;
 
