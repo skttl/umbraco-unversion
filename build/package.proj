@@ -18,8 +18,8 @@
 	<PropertyGroup>
 		<ProjectName>Our.Umbraco.UnVersion</ProjectName>
 		<PackageName>UnVersion</PackageName>
-		<MinUmbracoVersion>7.1.4</MinUmbracoVersion>
-		<Readme>A content un-versioning package for Umbraco 7.1+</Readme>
+		<MinUmbracoVersion>8.2.1</MinUmbracoVersion>
+		<Readme>A content un-versioning package for Umbraco 8.2+</Readme>
 		<AuthorName>Matt Brailsford, Lee Kelleher</AuthorName>
 		<AuthorUrl>https://github.com/umco/umbraco-unversion/graphs/contributors</AuthorUrl>
 		<PackageLicenseName>MIT license</PackageLicenseName>

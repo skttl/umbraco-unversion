@@ -12,7 +12,7 @@ This package automaticaly removes any previous versions for those times when a v
 
 ### Installation
 
-> *Note:* UnVersion has been developed against **Umbraco v7.1.4** and will support that version and above.
+> *Note:* UnVersion has been developed against **Umbraco v8.2.? (Pending PR)** and will support that version and above.
 
 UnVersion can be installed from either Our Umbraco or NuGet package repositories, or build manually from the source-code:
 
@@ -34,7 +34,7 @@ We also have a [MyGet package repository](https://www.myget.org/gallery/umbraco-
 
 If you prefer, you can compile UnVersion yourself, you'll need:
 
-* Visual Studio 2012 (or above)
+* Visual Studio 2017 (or above)
 
 To clone it locally click the "Clone in Windows" button above or run the following git commands.
 

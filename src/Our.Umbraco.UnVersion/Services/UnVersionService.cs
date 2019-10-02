@@ -4,24 +4,27 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Data.SqlServerCe;
-using System.Reflection;
-using log4net;
-using umbraco;
 using Umbraco.Core.Models;
+using Umbraco.Core.Logging;
+using Umbraco.Web;
+using System.Linq;
+using Umbraco.Core.Services;
 
 namespace Our.Umbraco.UnVersion.Services
 {
     public class UnVersionService : IUnVersionService
     {
-        private readonly static ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
+        private readonly ILogger _logger;
+        private readonly IUmbracoContextFactory _context;
+        private readonly IContentService _contentService;
         private readonly IUnVersionConfig _config;
-        private readonly bool _catchSqlExceptions;
 
-        public UnVersionService(IUnVersionConfig config, bool catchSqlExceptions)
+        public UnVersionService(IUnVersionConfig config, ILogger logger, IUmbracoContextFactory context, IContentService contentService)
         {
+            _logger = logger;
             _config = config;
-            _catchSqlExceptions = catchSqlExceptions;
+            _context = context;
+            _contentService = contentService;
         }
 
         public void UnVersion(IContent content)
@@ -36,9 +39,7 @@ namespace Our.Umbraco.UnVersion.Services
 
             if (configEntries.Count <= 0)
             {
-                if (Logger.IsDebugEnabled)
-                    Logger.Debug("No unversion configuration found for type " + content.ContentType.Alias);
-
+                _logger.Debug<UnVersionService>("No unversion configuration found for type " + content.ContentType.Alias);
                 return;
             }
 
@@ -48,7 +49,7 @@ namespace Our.Umbraco.UnVersion.Services
 
                 if (!String.IsNullOrEmpty(configEntry.RootXPath))
                 {
-                    if (content.Level > 1 && content.Parent() != null)
+                    if (content.Level > 1 && content.ParentId > 0)
                     {
                         var ids = GetNodeIdsFromXpath(configEntry.RootXPath);
                         isValid = ids.Contains(content.ParentId);
@@ -58,154 +59,31 @@ namespace Our.Umbraco.UnVersion.Services
                 if (!isValid)
                     continue;
 
-                var connStr = ConfigurationManager.ConnectionStrings["umbracoDbDSN"];
-
-                using (var conn = connStr.ProviderName.Contains("SqlServerCe")
-                    ? (IDbConnection)new SqlCeConnection(connStr.ConnectionString)
-                    : (IDbConnection)new SqlConnection(connStr.ConnectionString))
+                if (configEntry.MaxDays < int.MaxValue)
                 {
+                    _contentService.DeleteVersions(content.Id, DateTime.Now.AddDays(-configEntry.MaxDays));
+                }
 
-                    conn.Open();
-
-                    var vesionsToKeep = VersionsToKeep(content.Id, configEntry, conn);
-                    var versionsToKeepString = string.Join(",", vesionsToKeep);
-
-                    if (Logger.IsDebugEnabled)
-                        Logger.Debug("Keeping versions " + versionsToKeepString);
-
-                    var sqlStrings = new List<string> {
-                        string.Format(@"
-                                    DELETE
-                                    FROM	cmsPreviewXml
-                                    WHERE	nodeId = {0} AND versionId NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString),
-
-                        string.Format(@"
-                                    DELETE
-                                    FROM	cmsPropertyData
-                                    WHERE	contentNodeId = {0} AND versionId  NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString),
-
-
-                        string.Format(@"
-                                    DELETE
-                                    FROM	cmsContentVersion
-                                    WHERE	contentId = {0} AND versionId  NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString),
-
-                        string.Format(@"
-                                    DELETE
-                                    FROM	cmsDocument 
-                                    WHERE	nodeId = {0} AND versionId  NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString)
-                    };
-
-                    foreach (var sqlString in sqlStrings)
+                if (configEntry.MaxCount < int.MaxValue)
+                {
+                    var versionIds = _contentService.GetVersionIds(content.Id, configEntry.MaxCount + 1);
+                    if (versionIds.Count() > configEntry.MaxCount)
                     {
-                        ExecuteSql(sqlString, conn);
+                        _contentService.DeleteVersion(content.Id, versionIds.Last(), true);
                     }
-
-                    conn.Close();
                 }
             }
-        }
-
-        void ExecuteSql(string sql, IDbConnection connection)
-        {
-            if (Logger.IsDebugEnabled)
-                Logger.Debug(sql);
-
-            var command = connection.CreateCommand();
-            command.CommandType = CommandType.Text;
-            command.CommandText = sql;
-
-            if (_catchSqlExceptions)
-            {
-                try
-                {
-                    command.ExecuteNonQuery();
-                }
-                catch (Exception ex)
-                {
-                    Logger.Warn("Executing " + sql, ex);
-                }
-            }
-            else
-            {
-                command.ExecuteNonQuery();
-            }
-        }
-
-        private IEnumerable<string> VersionsToKeep(int contentId, UnVersionConfigEntry configEntry, IDbConnection connection)
-        {
-            // Get a list of all versions
-            // TODO: Need to find a better way to do this, but SQL CE 4 doesn't allow sub queries
-            var sql = string.Format(@"SELECT			
-                                    cv.VersionId,
-	                                cv.VersionDate,
-	                                d.published,
-	                                d.newest
-                FROM				cmsContentVersion cv
-                LEFT OUTER JOIN		cmsDocument d ON d.versionId = cv.VersionId
-                WHERE				cv.ContentId = {0}
-                ORDER BY            cv.VersionDate DESC",
-                contentId);
-
-            if (Logger.IsDebugEnabled)
-                Logger.Debug(sql);
-
-            var command = connection.CreateCommand();
-            command.CommandType = CommandType.Text;
-            command.CommandText = sql;
-
-            var versionsToKeep = new List<string>();
-            var readerIndex = 0;
-
-            try
-            {
-                using (var reader = command.ExecuteReader())
-		    {
-			    while (reader.Read())
-			    {
-				    var versionId = reader.GetGuid(0);
-				    var versionDate = reader.GetDateTime(1);
-				    var published = !reader.IsDBNull(2) && reader.GetBoolean(2);
-				    var newest = !reader.IsDBNull(3) && reader.GetBoolean(3);
-
-				    readerIndex++;
-
-				    var daysDiff = (DateTime.Now - versionDate).Days;
-				    if (published || newest || (daysDiff < configEntry.MaxDays && readerIndex <= configEntry.MaxCount))
-					    versionsToKeep.Add("'" + versionId.ToString("D") + "'");
-			    }
-
-			    reader.Close();
-			    reader.Dispose();
-		    }
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn(ex);
-
-                if (!_catchSqlExceptions)
-                    throw ex;
-            }
-
-            return versionsToKeep;
         }
 
         private List<int> GetNodeIdsFromXpath(string xpath)
         {
             var ids = new List<int>();
-            var nodes = library.GetXmlNodeByXPath(xpath);
-
-            while (nodes.MoveNext())
-                ids.Add(Convert.ToInt32(nodes.Current.GetAttribute("id", "")));
-
+            using (var cref = _context.EnsureUmbracoContext())
+            {
+                var cache = cref.UmbracoContext.Content;
+                var nodes = cache.GetByXPath(xpath);
+                ids = nodes.Select(x => x.Id).ToList();
+            }
             return ids;
         }
     }

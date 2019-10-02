@@ -2,29 +2,34 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Web;
 using System.Xml;
-using log4net;
+using Umbraco.Core.Logging;
 
 namespace Our.Umbraco.UnVersion
 {
     public class UnVersionConfig : IUnVersionConfig
     {
-        private readonly static ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private readonly ILogger _logger;
 
         public IDictionary<string, List<UnVersionConfigEntry>> ConfigEntries { get; set; }
 
-        public UnVersionConfig(string configPath)
+        public UnVersionConfig(ILogger logger)
         {
+            _logger = logger;
             ConfigEntries = new Dictionary<string, List<UnVersionConfigEntry>>();
 
-            LoadXmlConfig(configPath);
+            var appPath = HttpRuntime.AppDomainAppPath;
+            var configFilePath = Path.Combine(appPath, @"config\unVersion.config");
+
+            LoadXmlConfig(configFilePath);
         }
 
         private void LoadXmlConfig(string configPath)
         {
             if (!File.Exists(configPath))
             {
-                Logger.Warn("Couldn't find config file " + configPath);
+                _logger.Warn<UnVersionConfig>("Couldn't find config file " + configPath);
                 return;
             }
 
