@@ -11,8 +11,7 @@ namespace Our.Umbraco.UnVersion
 {
     public class Bootstrap : ApplicationEventHandler
     {
-        protected override void ApplicationStarted(UmbracoApplicationBase umbracoApplication,
-            ApplicationContext applicationContext)
+        protected override void ApplicationStarted(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
         {
             // Init config
             var appPath = umbracoApplication.Server.MapPath("~/");

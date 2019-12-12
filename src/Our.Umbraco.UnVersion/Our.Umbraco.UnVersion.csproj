@@ -28,6 +28,7 @@
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
     <UseGlobalApplicationHostFile />
+    <Use64BitIISExpress />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -49,35 +50,11 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="interfaces">
-      <HintPath>..\packages\UmbracoCms.Core.7.1.4\lib\interfaces.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="log4net">
-      <HintPath>..\packages\UmbracoCms.Core.7.1.4\lib\log4net.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\packages\Newtonsoft.Json.6.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="System.Data.SqlServerCe, Version=4.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
-      <Private>False</Private>
-      <HintPath>..\packages\UmbracoCms.Core.7.1.4\lib\System.Data.SqlServerCe.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Configuration" />
-    <Reference Include="umbraco">
-      <HintPath>..\packages\UmbracoCms.Core.7.1.4\lib\umbraco.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Umbraco.Core">
-      <HintPath>..\packages\UmbracoCms.Core.7.1.4\lib\Umbraco.Core.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bootstrap.cs" />
@@ -90,9 +67,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Web\UI\Config\UnVersion.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="packages.config" />
   </ItemGroup>
   <!--<PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
