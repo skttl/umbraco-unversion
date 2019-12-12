@@ -13,7 +13,7 @@ To define a new unversion rule, create an `<add>` element with the following att
 ```xml
 <?xml version="1.0"?>
 <unVersionConfig>
-  <add docTypeAlias="newsPage" rootXpath="//node[@nodeTypeAlias='newsIndex']" maxDays="2" maxCount="10" />
+  <add docTypeAlias="newsPage" rootXpath="//blog[@isDoc]" maxDays="2" maxCount="10" />
 </unVersionConfig>
 ```
 
