@@ -1,6 +1,7 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29411.108
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Our.Umbraco.UnVersion", "Our.Umbraco.UnVersion\Our.Umbraco.UnVersion.csproj", "{A3E6B76A-35AC-415A-BCED-971223D63BAC}"
 EndProject
@@ -21,6 +22,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Our.Umbraco.UnVersion.Tests", "Our.Umbraco.UnVersion.Tests\Our.Umbraco.UnVersion.Tests.csproj", "{DB4825F3-92CB-44CA-96F1-2680026DAFB1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,11 +34,18 @@ Global
 		{A3E6B76A-35AC-415A-BCED-971223D63BAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A3E6B76A-35AC-415A-BCED-971223D63BAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A3E6B76A-35AC-415A-BCED-971223D63BAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB4825F3-92CB-44CA-96F1-2680026DAFB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB4825F3-92CB-44CA-96F1-2680026DAFB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB4825F3-92CB-44CA-96F1-2680026DAFB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB4825F3-92CB-44CA-96F1-2680026DAFB1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{AE05CC62-1E54-4E24-AA99-B7EED3CFFA3C} = {E155CD07-7718-4EE8-B51E-FECABE034A33}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A3114DD6-96F4-4EB1-B6DA-0811E052F9F9}
 	EndGlobalSection
 EndGlobal

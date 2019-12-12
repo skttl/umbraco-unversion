@@ -25,6 +25,7 @@ namespace Our.Umbraco.UnVersion.Services
         private IUmbracoContextFactory _contextFactory;
         private IContentService _contentService;
 
+        
         public UnVersionService(IUnVersionConfig config, bool catchSqlExceptions)
         {
             _config = config;
@@ -35,9 +36,6 @@ namespace Our.Umbraco.UnVersion.Services
         {
             IContent content;
             IContentService cs = null;
-
-            
-
         }
 
         public void UnVersion(IContent content)
@@ -83,35 +81,9 @@ namespace Our.Umbraco.UnVersion.Services
                 if(!allVersions.Any())
                     continue;
 
-                List<int> versionIdsToDelete = new List<int>();
+                var versionIdsToDelete = GetVersionsToDelete(allVersions, configEntry, DateTime.Now);
 
-                int iterationCount = 0;
-                foreach (var version in allVersions)
-                {
-                    iterationCount++;
-
-                    // If we have a maxCount and the current iteration is above that max-count
-                    if (configEntry.MaxCount > 0 && iterationCount > configEntry.MaxCount)
-                    {
-                        versionIdsToDelete.Add(version.VersionId);
-                        // no need to compare dates since we've already added this version for deletion
-                        continue;
-                    }
-                    
-                    // If we have a max days and the current version is older
-                    if (configEntry.MaxDays > 0)
-                    {
-                        var dateRemoveBefore = DateTime.Now.AddDays(0 - configEntry.MaxDays);
-                        if (version.UpdateDate < dateRemoveBefore)
-                        {
-                            versionIdsToDelete.Add(version.VersionId);
-                        }
-                    }
-
-                    // remove all version with count above the limit and with date older than the limit.
-
-                }
-
+                //TODO: Remove more stuff
 
                 /*
                     readerIndex++;
@@ -179,6 +151,48 @@ namespace Our.Umbraco.UnVersion.Services
                 //    conn.Close();
                 //}
             }
+        }
+
+        /// <summary>
+        /// Iterates a list of IContent versions and returns items to be removed based on a configEntry.
+        /// </summary>
+        /// <param name="versions"></param>
+        /// <param name="configEntry"></param>
+        /// <param name="currentDateTime"></param>
+        /// <returns></returns>
+        public List<int> GetVersionsToDelete(List<IContent> versions, UnVersionConfigEntry configEntry, DateTime currentDateTime)
+        {
+            List<int> versionIdsToDelete = new List<int>();
+
+            int iterationCount = 0;
+
+            foreach (var version in versions)
+            {
+                iterationCount++;
+
+                // If we have a maxCount and the current iteration is above that max-count
+                if (configEntry.MaxCount > 0 && iterationCount > configEntry.MaxCount)
+                {
+                    versionIdsToDelete.Add(version.VersionId);
+                    // no need to compare dates since we've already added this version for deletion
+                    continue;
+                }
+
+                // If we have a max days and the current version is older
+                if (configEntry.MaxDays > 0 && configEntry.MaxDays != int.MaxValue)
+                {
+                    // TODO: Mock out DateTime now.
+                    var dateRemoveBefore = currentDateTime.AddDays(0 - configEntry.MaxDays);
+                    if (version.UpdateDate < dateRemoveBefore)
+                    {
+                        versionIdsToDelete.Add(version.VersionId);
+                    }
+                }
+
+            }
+
+            return versionIdsToDelete;
+
         }
 
         //void ExecuteSql(string sql, IDbConnection connection)

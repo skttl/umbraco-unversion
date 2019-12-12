@@ -40,7 +40,7 @@ namespace Our.Umbraco.UnVersion
                     {
                         DocTypeAlias = xmlConfigEntry.Attributes["docTypeAlias"] != null
                             ? xmlConfigEntry.Attributes["docTypeAlias"].Value
-                            : "$_ALL"
+                            : "$_ALL" //TODO: Move to constant
                     };
 
                     if (xmlConfigEntry.Attributes["rootXpath"] != null)
