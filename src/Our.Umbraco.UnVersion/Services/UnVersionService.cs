@@ -201,8 +201,9 @@ namespace Our.Umbraco.UnVersion.Services
             {
                 using (var ctx = _contextFactory.EnsureUmbracoContext())
                 {
-                    var configFilePath = ctx.UmbracoContext.HttpContext.Server.MapPath(Path.Combine(SystemDirectories.Config, "\\unVersion.config"));
-                    _unVersionConfig = new UnVersionConfig(configFilePath);
+                    var path = string.Concat(SystemDirectories.Config, "/unVersion.config");
+                    var configFilePath = ctx.UmbracoContext.HttpContext.Server.MapPath(path);
+                    _unVersionConfig = new UnVersionConfig(configFilePath, _logger);
                 }
             }
 

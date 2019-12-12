@@ -3,30 +3,40 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Xml;
+using Umbraco.Core.Logging;
 
 
 namespace Our.Umbraco.UnVersion
 {
     public class UnVersionConfig : IUnVersionConfig
     {
-        
         public const string AllDocumentTypesKey = "$_ALL";
-
         public IDictionary<string, List<UnVersionConfigEntry>> ConfigEntries { get; set; }
 
-        public UnVersionConfig(string configPath)
+        private ILogger _logger;
+
+        public UnVersionConfig(string configPath, ILogger logger)
         {
+            _logger = logger;
+
             ConfigEntries = new Dictionary<string, List<UnVersionConfigEntry>>();
 
-            LoadXmlConfig(configPath);
+            try
+            {
+                LoadXmlConfig(configPath);
+            }
+            catch (Exception e)
+            {
+                _logger.Error<UnVersionConfig>(e, "Error when parsing unVersion.config.");
+            }
+
         }
 
         private void LoadXmlConfig(string configPath)
         {
             if (!File.Exists(configPath))
             {
-                //TODO: Use Umbraco logger
-                //Logger.Warn("Couldn't find config file " + configPath);
+                _logger.Warn<UnVersionConfig>("Couldn't find config file " + configPath);
                 return;
             }
 
