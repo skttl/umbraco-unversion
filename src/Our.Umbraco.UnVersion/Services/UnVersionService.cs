@@ -4,10 +4,14 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Data.SqlServerCe;
+using System.Linq;
 using System.Reflection;
+using NPoco;
 //using log4net;
 //using umbraco;
 using Umbraco.Core.Models;
+using Umbraco.Core.Services;
+using Umbraco.Web;
 
 namespace Our.Umbraco.UnVersion.Services
 {
@@ -18,14 +22,27 @@ namespace Our.Umbraco.UnVersion.Services
         private readonly IUnVersionConfig _config;
         private readonly bool _catchSqlExceptions;
 
+        private IUmbracoContextFactory _contextFactory;
+        private IContentService _contentService;
+
         public UnVersionService(IUnVersionConfig config, bool catchSqlExceptions)
         {
             _config = config;
             _catchSqlExceptions = catchSqlExceptions;
         }
 
+        public void FooBarTesting()
+        {
+            IContent content;
+            IContentService cs = null;
+
+            
+
+        }
+
         public void UnVersion(IContent content)
         {
+
             var configEntries = new List<UnVersionConfigEntry>();
 
             if (_config.ConfigEntries.ContainsKey(content.ContentType.Alias))
@@ -46,100 +63,149 @@ namespace Our.Umbraco.UnVersion.Services
             {
                 var isValid = true;
 
+                // Check the RootXPath if configured
                 if (!String.IsNullOrEmpty(configEntry.RootXPath))
                 {
                     // TODO: Fix in some otherway
-                    //if (content.Level > 1 && content.Parent() != null)
-                    //{
-                    //    var ids = GetNodeIdsFromXpath(configEntry.RootXPath);
-                    //    isValid = ids.Contains(content.ParentId);
-                    //}
+                    if (content.Level > 1 && content.ParentId > 0)
+                    {
+                        var ids = GetNodeIdsFromXpath(configEntry.RootXPath);
+                        isValid = ids.Contains(content.ParentId);
+                    }
                 }
 
                 if (!isValid)
                     continue;
 
-                var connStr = ConfigurationManager.ConnectionStrings["umbracoDbDSN"];
+                // Getting all versions (guess nobody keeps over 20 000 versions of a content node)
+                var allVersions = _contentService.GetVersionsSlim(content.Id, 0, 20000).ToList();
 
-                using (var conn = connStr.ProviderName.Contains("SqlServerCe")
-                    ? (IDbConnection)new SqlCeConnection(connStr.ConnectionString)
-                    : (IDbConnection)new SqlConnection(connStr.ConnectionString))
+                if(!allVersions.Any())
+                    continue;
+
+                List<int> versionIdsToDelete = new List<int>();
+
+                int iterationCount = 0;
+                foreach (var version in allVersions)
                 {
+                    iterationCount++;
 
-                    conn.Open();
-
-                    var vesionsToKeep = VersionsToKeep(content.Id, configEntry, conn);
-                    var versionsToKeepString = string.Join(",", vesionsToKeep);
-
-                    //if (Logger.IsDebugEnabled)
-                    //    Logger.Debug("Keeping versions " + versionsToKeepString);
-
-                    var sqlStrings = new List<string> {
-                        string.Format(@"
-                                    DELETE
-                                    FROM	cmsPreviewXml
-                                    WHERE	nodeId = {0} AND versionId NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString),
-
-                        string.Format(@"
-                                    DELETE
-                                    FROM	cmsPropertyData
-                                    WHERE	contentNodeId = {0} AND versionId  NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString),
-
-
-                        string.Format(@"
-                                    DELETE
-                                    FROM	cmsContentVersion
-                                    WHERE	contentId = {0} AND versionId  NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString),
-
-                        string.Format(@"
-                                    DELETE
-                                    FROM	cmsDocument 
-                                    WHERE	nodeId = {0} AND versionId  NOT IN ({1})",
-                        content.Id,
-                        versionsToKeepString)
-                    };
-
-                    foreach (var sqlString in sqlStrings)
+                    // If we have a maxCount and the current iteration is above that max-count
+                    if (configEntry.MaxCount > 0 && iterationCount > configEntry.MaxCount)
                     {
-                        ExecuteSql(sqlString, conn);
+                        versionIdsToDelete.Add(version.VersionId);
+                        // no need to compare dates since we've already added this version for deletion
+                        continue;
+                    }
+                    
+                    // If we have a max days and the current version is older
+                    if (configEntry.MaxDays > 0)
+                    {
+                        var dateRemoveBefore = DateTime.Now.AddDays(0 - configEntry.MaxDays);
+                        if (version.UpdateDate < dateRemoveBefore)
+                        {
+                            versionIdsToDelete.Add(version.VersionId);
+                        }
                     }
 
-                    conn.Close();
+                    // remove all version with count above the limit and with date older than the limit.
+
                 }
+
+
+                /*
+                    readerIndex++;
+                    var daysDiff = (DateTime.Now - versionDate).Days;
+                    if (published || newest || (daysDiff < configEntry.MaxDays && readerIndex <= configEntry.MaxCount))
+                 */
+
+                //TODO: Get all version, order by date, remove all version with count above the limit and with date older than the limit.
+
+
+
+
+
+                //var connStr = ConfigurationManager.ConnectionStrings["umbracoDbDSN"];
+
+                //using (var conn = connStr.ProviderName.Contains("SqlServerCe")
+                //    ? (IDbConnection)new SqlCeConnection(connStr.ConnectionString)
+                //    : (IDbConnection)new SqlConnection(connStr.ConnectionString))
+                //{
+
+                //    conn.Open();
+
+                //    var vesionsToKeep = VersionsToKeep(content.Id, configEntry, conn);
+                //    var versionsToKeepString = string.Join(",", vesionsToKeep);
+
+                //    //if (Logger.IsDebugEnabled)
+                //    //    Logger.Debug("Keeping versions " + versionsToKeepString);
+
+                //    var sqlStrings = new List<string> {
+                //        string.Format(@"
+                //                    DELETE
+                //                    FROM	cmsPreviewXml
+                //                    WHERE	nodeId = {0} AND versionId NOT IN ({1})",
+                //        content.Id,
+                //        versionsToKeepString),
+
+                //        string.Format(@"
+                //                    DELETE
+                //                    FROM	cmsPropertyData
+                //                    WHERE	contentNodeId = {0} AND versionId  NOT IN ({1})",
+                //        content.Id,
+                //        versionsToKeepString),
+
+
+                //        string.Format(@"
+                //                    DELETE
+                //                    FROM	cmsContentVersion
+                //                    WHERE	contentId = {0} AND versionId  NOT IN ({1})",
+                //        content.Id,
+                //        versionsToKeepString),
+
+                //        string.Format(@"
+                //                    DELETE
+                //                    FROM	cmsDocument 
+                //                    WHERE	nodeId = {0} AND versionId  NOT IN ({1})",
+                //        content.Id,
+                //        versionsToKeepString)
+                //    };
+
+                //    foreach (var sqlString in sqlStrings)
+                //    {
+                //        ExecuteSql(sqlString, conn);
+                //    }
+
+                //    conn.Close();
+                //}
             }
         }
 
-        void ExecuteSql(string sql, IDbConnection connection)
-        {
-            //if (Logger.IsDebugEnabled)
-            //    Logger.Debug(sql);
+        //void ExecuteSql(string sql, IDbConnection connection)
+        //{
+        //    //if (Logger.IsDebugEnabled)
+        //    //    Logger.Debug(sql);
 
-            var command = connection.CreateCommand();
-            command.CommandType = CommandType.Text;
-            command.CommandText = sql;
+        //    var command = connection.CreateCommand();
+        //    command.CommandType = CommandType.Text;
+        //    command.CommandText = sql;
 
-            if (_catchSqlExceptions)
-            {
-                try
-                {
-                    command.ExecuteNonQuery();
-                }
-                catch (Exception ex)
-                {
-                    //Logger.Warn("Executing " + sql, ex);
-                }
-            }
-            else
-            {
-                command.ExecuteNonQuery();
-            }
-        }
+        //    if (_catchSqlExceptions)
+        //    {
+        //        try
+        //        {
+        //            command.ExecuteNonQuery();
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            //Logger.Warn("Executing " + sql, ex);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        command.ExecuteNonQuery();
+        //    }
+        //}
 
         private IEnumerable<string> VersionsToKeep(int contentId, UnVersionConfigEntry configEntry, IDbConnection connection)
         {
@@ -169,24 +235,24 @@ namespace Our.Umbraco.UnVersion.Services
             try
             {
                 using (var reader = command.ExecuteReader())
-		    {
-			    while (reader.Read())
-			    {
-				    var versionId = reader.GetGuid(0);
-				    var versionDate = reader.GetDateTime(1);
-				    var published = !reader.IsDBNull(2) && reader.GetBoolean(2);
-				    var newest = !reader.IsDBNull(3) && reader.GetBoolean(3);
+                {
+                    while (reader.Read())
+                    {
+                        var versionId = reader.GetGuid(0);
+                        var versionDate = reader.GetDateTime(1);
+                        var published = !reader.IsDBNull(2) && reader.GetBoolean(2);
+                        var newest = !reader.IsDBNull(3) && reader.GetBoolean(3);
 
-				    readerIndex++;
+                        readerIndex++;
 
-				    var daysDiff = (DateTime.Now - versionDate).Days;
-				    if (published || newest || (daysDiff < configEntry.MaxDays && readerIndex <= configEntry.MaxCount))
-					    versionsToKeep.Add("'" + versionId.ToString("D") + "'");
-			    }
+                        var daysDiff = (DateTime.Now - versionDate).Days;
+                        if (published || newest || (daysDiff < configEntry.MaxDays && readerIndex <= configEntry.MaxCount))
+                            versionsToKeep.Add("'" + versionId.ToString("D") + "'");
+                    }
 
-			    reader.Close();
-			    reader.Dispose();
-		    }
+                    reader.Close();
+                    reader.Dispose();
+                }
             }
             catch (Exception ex)
             {
@@ -201,13 +267,16 @@ namespace Our.Umbraco.UnVersion.Services
 
         private List<int> GetNodeIdsFromXpath(string xpath)
         {
-            var ids = new List<int>();
-            //var nodes = library.GetXmlNodeByXPath(xpath);
+            using (var ctx = _contextFactory.EnsureUmbracoContext())
+            {
+                var nodes = ctx.UmbracoContext.ContentCache.GetByXPath(xpath);
 
-            //while (nodes.MoveNext())
-            //    ids.Add(Convert.ToInt32(nodes.Current.GetAttribute("id", "")));
+                if(nodes == null)
+                    return new List<int>();
 
-            return ids;
+                return nodes.Select(x => x.Id).ToList();
+            }
+
         }
     }
 }

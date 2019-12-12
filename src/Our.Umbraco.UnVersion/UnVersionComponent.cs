@@ -12,21 +12,27 @@ namespace Our.Umbraco.UnVersion
 {
     public class UnVersionComponent : IComponent
     {
+        private readonly IUmbracoContextFactory _contextFactory;
+
         public UnVersionComponent(IUmbracoContextFactory contextFactory)
         {
-            
+            _contextFactory = contextFactory;
         }
 
         public void Initialize()
         {
-            // Init config
-            var configFilePath = Path.Combine(SystemDirectories.Config,"\\unVersion.config");
-            var config = new UnVersionConfig(configFilePath);
+            using (var ctx = _contextFactory.EnsureUmbracoContext())
+            {
+                
+                var configFilePath = ctx.UmbracoContext.HttpContext.Server.MapPath(Path.Combine(SystemDirectories.Config, "\\unVersion.config"));
+                var config = new UnVersionConfig(configFilePath);
 
-            // Init context
-            UnVersionContext.Instance.UnVersionService = new UnVersionService(config, true);
+                // Init context
+                UnVersionContext.Instance.UnVersionService = new UnVersionService(config, true);
 
-            ContentService.Published += ContentServicePublished;
+                ContentService.Published += ContentServicePublished;
+            }
+            
         }
 
         private void ContentServicePublished(IContentService sender, ContentPublishedEventArgs e)
