@@ -12,27 +12,16 @@ namespace Our.Umbraco.UnVersion
 {
     public class UnVersionComponent : IComponent
     {
-        private readonly IUmbracoContextFactory _contextFactory;
+        private readonly IUnVersionService _unVersionService;
 
-        public UnVersionComponent(IUmbracoContextFactory contextFactory)
+        public UnVersionComponent(IUnVersionService unVersionService)
         {
-            _contextFactory = contextFactory;
+            _unVersionService = unVersionService;
         }
 
         public void Initialize()
         {
-            using (var ctx = _contextFactory.EnsureUmbracoContext())
-            {
-                
-                var configFilePath = ctx.UmbracoContext.HttpContext.Server.MapPath(Path.Combine(SystemDirectories.Config, "\\unVersion.config"));
-                var config = new UnVersionConfig(configFilePath);
-
-                // Init context
-                UnVersionContext.Instance.UnVersionService = new UnVersionService(config, true);
-
-                ContentService.Published += ContentServicePublished;
-            }
-            
+            ContentService.Published += ContentServicePublished;
         }
 
         private void ContentServicePublished(IContentService sender, ContentPublishedEventArgs e)
@@ -42,7 +31,7 @@ namespace Our.Umbraco.UnVersion
 
             foreach (var entity in e.PublishedEntities)
             {
-                UnVersionContext.Instance.UnVersionService.UnVersion(entity);
+                _unVersionService.UnVersion(entity);
             }
         }
 

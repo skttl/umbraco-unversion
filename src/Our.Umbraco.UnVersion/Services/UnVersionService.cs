@@ -1,14 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Data.SqlClient;
-using System.Data.SqlServerCe;
+using System.IO;
 using System.Linq;
-using System.Reflection;
-using NPoco;
-//using log4net;
-//using umbraco;
+using Umbraco.Core.IO;
+using Umbraco.Core.Logging;
 using Umbraco.Core.Models;
 using Umbraco.Core.Services;
 using Umbraco.Web;
@@ -17,43 +12,34 @@ namespace Our.Umbraco.UnVersion.Services
 {
     public class UnVersionService : IUnVersionService
     {
-        //private readonly static ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
-        private readonly IUnVersionConfig _config;
-        private readonly bool _catchSqlExceptions;
-
+        private IUnVersionConfig _unVersionConfig;
         private IUmbracoContextFactory _contextFactory;
         private IContentService _contentService;
+        private ILogger _logger;
 
         
-        public UnVersionService(IUnVersionConfig config, bool catchSqlExceptions)
+        public UnVersionService(IUmbracoContextFactory contextFactory, IContentService contentService, ILogger logger)
         {
-            _config = config;
-            _catchSqlExceptions = catchSqlExceptions;
-        }
-
-        public void FooBarTesting()
-        {
-            IContent content;
-            IContentService cs = null;
+            _contextFactory = contextFactory;
+            _contentService = contentService;
+            _logger = logger;
         }
 
         public void UnVersion(IContent content)
         {
 
             var configEntries = new List<UnVersionConfigEntry>();
+            var config = GetUnVersionConfig();
 
-            if (_config.ConfigEntries.ContainsKey(content.ContentType.Alias))
-                configEntries.AddRange(_config.ConfigEntries[content.ContentType.Alias]);
+            if (config.ConfigEntries.ContainsKey(content.ContentType.Alias))
+                configEntries.AddRange(config.ConfigEntries[content.ContentType.Alias]);
 
-            if (_config.ConfigEntries.ContainsKey("$_ALL"))
-                configEntries.AddRange(_config.ConfigEntries["$_ALL"]);
+            if (config.ConfigEntries.ContainsKey(UnVersionConfig.AllDocumentTypesKey))
+                configEntries.AddRange(config.ConfigEntries[UnVersionConfig.AllDocumentTypesKey]);
 
             if (configEntries.Count <= 0)
             {
-                //if (Logger.IsDebugEnabled)
-                //    Logger.Debug("No unversion configuration found for type " + content.ContentType.Alias);
-
+                _logger.Debug<UnVersionService>("No UnVersion configuration found for type " + content.ContentType.Alias);
                 return;
             }
 
@@ -85,6 +71,11 @@ namespace Our.Umbraco.UnVersion.Services
 
                 //TODO: Remove more stuff
 
+                foreach (var vid in versionIdsToDelete)
+                {
+                    _contentService.DeleteVersion(content.Id, vid, false);
+                }
+
                 /*
                     readerIndex++;
                     var daysDiff = (DateTime.Now - versionDate).Days;
@@ -92,10 +83,6 @@ namespace Our.Umbraco.UnVersion.Services
                  */
 
                 //TODO: Get all version, order by date, remove all version with count above the limit and with date older than the limit.
-
-
-
-
 
                 //var connStr = ConfigurationManager.ConnectionStrings["umbracoDbDSN"];
 
@@ -181,7 +168,6 @@ namespace Our.Umbraco.UnVersion.Services
                 // If we have a max days and the current version is older
                 if (configEntry.MaxDays > 0 && configEntry.MaxDays != int.MaxValue)
                 {
-                    // TODO: Mock out DateTime now.
                     var dateRemoveBefore = currentDateTime.AddDays(0 - configEntry.MaxDays);
                     if (version.UpdateDate < dateRemoveBefore)
                     {
@@ -193,90 +179,6 @@ namespace Our.Umbraco.UnVersion.Services
 
             return versionIdsToDelete;
 
-        }
-
-        //void ExecuteSql(string sql, IDbConnection connection)
-        //{
-        //    //if (Logger.IsDebugEnabled)
-        //    //    Logger.Debug(sql);
-
-        //    var command = connection.CreateCommand();
-        //    command.CommandType = CommandType.Text;
-        //    command.CommandText = sql;
-
-        //    if (_catchSqlExceptions)
-        //    {
-        //        try
-        //        {
-        //            command.ExecuteNonQuery();
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            //Logger.Warn("Executing " + sql, ex);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        command.ExecuteNonQuery();
-        //    }
-        //}
-
-        private IEnumerable<string> VersionsToKeep(int contentId, UnVersionConfigEntry configEntry, IDbConnection connection)
-        {
-            // Get a list of all versions
-            // TODO: Need to find a better way to do this, but SQL CE 4 doesn't allow sub queries
-            var sql = string.Format(@"SELECT			
-                                    cv.VersionId,
-	                                cv.VersionDate,
-	                                d.published,
-	                                d.newest
-                FROM				cmsContentVersion cv
-                LEFT OUTER JOIN		cmsDocument d ON d.versionId = cv.VersionId
-                WHERE				cv.ContentId = {0}
-                ORDER BY            cv.VersionDate DESC",
-                contentId);
-
-            //if (Logger.IsDebugEnabled)
-            //    Logger.Debug(sql);
-
-            var command = connection.CreateCommand();
-            command.CommandType = CommandType.Text;
-            command.CommandText = sql;
-
-            var versionsToKeep = new List<string>();
-            var readerIndex = 0;
-
-            try
-            {
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        var versionId = reader.GetGuid(0);
-                        var versionDate = reader.GetDateTime(1);
-                        var published = !reader.IsDBNull(2) && reader.GetBoolean(2);
-                        var newest = !reader.IsDBNull(3) && reader.GetBoolean(3);
-
-                        readerIndex++;
-
-                        var daysDiff = (DateTime.Now - versionDate).Days;
-                        if (published || newest || (daysDiff < configEntry.MaxDays && readerIndex <= configEntry.MaxCount))
-                            versionsToKeep.Add("'" + versionId.ToString("D") + "'");
-                    }
-
-                    reader.Close();
-                    reader.Dispose();
-                }
-            }
-            catch (Exception ex)
-            {
-                //Logger.Warn(ex);
-
-                if (!_catchSqlExceptions)
-                    throw ex;
-            }
-
-            return versionsToKeep;
         }
 
         private List<int> GetNodeIdsFromXpath(string xpath)
@@ -291,6 +193,20 @@ namespace Our.Umbraco.UnVersion.Services
                 return nodes.Select(x => x.Id).ToList();
             }
 
+        }
+
+        private IUnVersionConfig GetUnVersionConfig()
+        {
+            if (_unVersionConfig == null)
+            {
+                using (var ctx = _contextFactory.EnsureUmbracoContext())
+                {
+                    var configFilePath = ctx.UmbracoContext.HttpContext.Server.MapPath(Path.Combine(SystemDirectories.Config, "\\unVersion.config"));
+                    _unVersionConfig = new UnVersionConfig(configFilePath);
+                }
+            }
+
+            return _unVersionConfig;
         }
     }
 }

@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 using Our.Umbraco.UnVersion.Services;
 using Umbraco.Core.Models;
 
-namespace Our.Umbraco.UnVersion.Tests
+namespace Our.Umbraco.UnVersion.Tests.Services
 {
     [TestClass]
     public class ServiceTests
@@ -23,7 +22,7 @@ namespace Our.Umbraco.UnVersion.Tests
                 TestHelper.GetVersionMock(3, new DateTime(2019, 12, 20)).Object // should be kept
             };
             
-            var service = new UnVersionService(null,false);
+            var service = new UnVersionService(null,null,null);
 
             var res = service.GetVersionsToDelete(versions, config, new DateTime(2019, 12, 30));
 
@@ -51,7 +50,7 @@ namespace Our.Umbraco.UnVersion.Tests
                 TestHelper.GetVersionMock(90, new DateTime(2019, 12, 20)).Object, // should be deleted
             };
 
-            var service = new UnVersionService(null, false);
+            var service = new UnVersionService(null, null,null);
 
             var res = service.GetVersionsToDelete(versions, config, new DateTime(2019, 12, 30));
 

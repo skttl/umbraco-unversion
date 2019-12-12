@@ -9,7 +9,8 @@ namespace Our.Umbraco.UnVersion
 {
     public class UnVersionConfig : IUnVersionConfig
     {
-        //private readonly static ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        
+        public const string AllDocumentTypesKey = "$_ALL";
 
         public IDictionary<string, List<UnVersionConfigEntry>> ConfigEntries { get; set; }
 
@@ -40,7 +41,7 @@ namespace Our.Umbraco.UnVersion
                     {
                         DocTypeAlias = xmlConfigEntry.Attributes["docTypeAlias"] != null
                             ? xmlConfigEntry.Attributes["docTypeAlias"].Value
-                            : "$_ALL" //TODO: Move to constant
+                            : AllDocumentTypesKey //TODO: Move to constant
                     };
 
                     if (xmlConfigEntry.Attributes["rootXpath"] != null)
