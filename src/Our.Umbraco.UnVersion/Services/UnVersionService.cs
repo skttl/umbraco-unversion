@@ -5,15 +5,15 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Data.SqlServerCe;
 using System.Reflection;
-using log4net;
-using umbraco;
+//using log4net;
+//using umbraco;
 using Umbraco.Core.Models;
 
 namespace Our.Umbraco.UnVersion.Services
 {
     public class UnVersionService : IUnVersionService
     {
-        private readonly static ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        //private readonly static ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         private readonly IUnVersionConfig _config;
         private readonly bool _catchSqlExceptions;
@@ -36,8 +36,8 @@ namespace Our.Umbraco.UnVersion.Services
 
             if (configEntries.Count <= 0)
             {
-                if (Logger.IsDebugEnabled)
-                    Logger.Debug("No unversion configuration found for type " + content.ContentType.Alias);
+                //if (Logger.IsDebugEnabled)
+                //    Logger.Debug("No unversion configuration found for type " + content.ContentType.Alias);
 
                 return;
             }
@@ -48,11 +48,12 @@ namespace Our.Umbraco.UnVersion.Services
 
                 if (!String.IsNullOrEmpty(configEntry.RootXPath))
                 {
-                    if (content.Level > 1 && content.Parent() != null)
-                    {
-                        var ids = GetNodeIdsFromXpath(configEntry.RootXPath);
-                        isValid = ids.Contains(content.ParentId);
-                    }
+                    // TODO: Fix in some otherway
+                    //if (content.Level > 1 && content.Parent() != null)
+                    //{
+                    //    var ids = GetNodeIdsFromXpath(configEntry.RootXPath);
+                    //    isValid = ids.Contains(content.ParentId);
+                    //}
                 }
 
                 if (!isValid)
@@ -70,8 +71,8 @@ namespace Our.Umbraco.UnVersion.Services
                     var vesionsToKeep = VersionsToKeep(content.Id, configEntry, conn);
                     var versionsToKeepString = string.Join(",", vesionsToKeep);
 
-                    if (Logger.IsDebugEnabled)
-                        Logger.Debug("Keeping versions " + versionsToKeepString);
+                    //if (Logger.IsDebugEnabled)
+                    //    Logger.Debug("Keeping versions " + versionsToKeepString);
 
                     var sqlStrings = new List<string> {
                         string.Format(@"
@@ -116,8 +117,8 @@ namespace Our.Umbraco.UnVersion.Services
 
         void ExecuteSql(string sql, IDbConnection connection)
         {
-            if (Logger.IsDebugEnabled)
-                Logger.Debug(sql);
+            //if (Logger.IsDebugEnabled)
+            //    Logger.Debug(sql);
 
             var command = connection.CreateCommand();
             command.CommandType = CommandType.Text;
@@ -131,7 +132,7 @@ namespace Our.Umbraco.UnVersion.Services
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warn("Executing " + sql, ex);
+                    //Logger.Warn("Executing " + sql, ex);
                 }
             }
             else
@@ -155,8 +156,8 @@ namespace Our.Umbraco.UnVersion.Services
                 ORDER BY            cv.VersionDate DESC",
                 contentId);
 
-            if (Logger.IsDebugEnabled)
-                Logger.Debug(sql);
+            //if (Logger.IsDebugEnabled)
+            //    Logger.Debug(sql);
 
             var command = connection.CreateCommand();
             command.CommandType = CommandType.Text;
@@ -189,7 +190,7 @@ namespace Our.Umbraco.UnVersion.Services
             }
             catch (Exception ex)
             {
-                Logger.Warn(ex);
+                //Logger.Warn(ex);
 
                 if (!_catchSqlExceptions)
                     throw ex;
@@ -201,10 +202,10 @@ namespace Our.Umbraco.UnVersion.Services
         private List<int> GetNodeIdsFromXpath(string xpath)
         {
             var ids = new List<int>();
-            var nodes = library.GetXmlNodeByXPath(xpath);
+            //var nodes = library.GetXmlNodeByXPath(xpath);
 
-            while (nodes.MoveNext())
-                ids.Add(Convert.ToInt32(nodes.Current.GetAttribute("id", "")));
+            //while (nodes.MoveNext())
+            //    ids.Add(Convert.ToInt32(nodes.Current.GetAttribute("id", "")));
 
             return ids;
         }

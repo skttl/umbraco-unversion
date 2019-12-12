@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Xml;
-using log4net;
+
 
 namespace Our.Umbraco.UnVersion
 {
     public class UnVersionConfig : IUnVersionConfig
     {
-        private readonly static ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        //private readonly static ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         public IDictionary<string, List<UnVersionConfigEntry>> ConfigEntries { get; set; }
 
@@ -24,7 +24,8 @@ namespace Our.Umbraco.UnVersion
         {
             if (!File.Exists(configPath))
             {
-                Logger.Warn("Couldn't find config file " + configPath);
+                //TODO: Use Umbraco logger
+                //Logger.Warn("Couldn't find config file " + configPath);
                 return;
             }
 
