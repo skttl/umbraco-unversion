@@ -2,6 +2,8 @@
 using System.Web;
 using Our.Umbraco.UnVersion.Services;
 using Umbraco.Core.Events;
+using Umbraco.Core.Models;
+using Umbraco.Core.Publishing;
 using Umbraco.Core.Services;
 using Umbraco.Core;
 using Umbraco.Core.Composing;

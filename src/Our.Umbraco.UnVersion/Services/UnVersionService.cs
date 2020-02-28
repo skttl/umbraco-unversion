@@ -29,13 +29,15 @@ namespace Our.Umbraco.UnVersion.Services
 
         public void UnVersion(IContent content)
         {
+
             var configEntries = new List<UnVersionConfigEntry>();
+            var config = GetUnVersionConfig();
 
-            if (_config.ConfigEntries.ContainsKey(content.ContentType.Alias))
-                configEntries.AddRange(_config.ConfigEntries[content.ContentType.Alias]);
+            if (config.ConfigEntries.ContainsKey(content.ContentType.Alias))
+                configEntries.AddRange(config.ConfigEntries[content.ContentType.Alias]);
 
-            if (_config.ConfigEntries.ContainsKey("$_ALL"))
-                configEntries.AddRange(_config.ConfigEntries["$_ALL"]);
+            if (config.ConfigEntries.ContainsKey(UnVersionConfig.AllDocumentTypesKey))
+                configEntries.AddRange(config.ConfigEntries[UnVersionConfig.AllDocumentTypesKey]);
 
             if (configEntries.Count <= 0)
             {
@@ -47,6 +49,7 @@ namespace Our.Umbraco.UnVersion.Services
             {
                 var isValid = true;
 
+                // Check the RootXPath if configured
                 if (!String.IsNullOrEmpty(configEntry.RootXPath))
                 {
                     if (content.Level > 1 && content.ParentId > 0)
@@ -72,19 +75,40 @@ namespace Our.Umbraco.UnVersion.Services
                         _contentService.DeleteVersion(content.Id, versionIds.Last(), true);
                     }
                 }
+
             }
+
+            return versionIdsToDelete;
+
         }
 
         private List<int> GetNodeIdsFromXpath(string xpath)
         {
-            var ids = new List<int>();
-            using (var cref = _context.EnsureUmbracoContext())
+            using (var ctx = _contextFactory.EnsureUmbracoContext())
             {
-                var cache = cref.UmbracoContext.Content;
-                var nodes = cache.GetByXPath(xpath);
-                ids = nodes.Select(x => x.Id).ToList();
+                var nodes = ctx.UmbracoContext.ContentCache.GetByXPath(xpath);
+
+                if(nodes == null)
+                    return new List<int>();
+
+                return nodes.Select(x => x.Id).ToList();
             }
-            return ids;
+
+        }
+
+        private IUnVersionConfig GetUnVersionConfig()
+        {
+            if (_unVersionConfig == null)
+            {
+                using (var ctx = _contextFactory.EnsureUmbracoContext())
+                {
+                    var path = string.Concat(SystemDirectories.Config, "/unVersion.config");
+                    var configFilePath = ctx.UmbracoContext.HttpContext.Server.MapPath(path);
+                    _unVersionConfig = new UnVersionConfig(configFilePath, _logger);
+                }
+            }
+
+            return _unVersionConfig;
         }
     }
 }

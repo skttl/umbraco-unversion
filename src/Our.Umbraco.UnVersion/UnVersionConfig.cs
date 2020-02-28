@@ -10,19 +10,26 @@ namespace Our.Umbraco.UnVersion
 {
     public class UnVersionConfig : IUnVersionConfig
     {
-        private readonly ILogger _logger;
-
+        public const string AllDocumentTypesKey = "$_ALL";
         public IDictionary<string, List<UnVersionConfigEntry>> ConfigEntries { get; set; }
 
-        public UnVersionConfig(ILogger logger)
+        private ILogger _logger;
+
+        public UnVersionConfig(string configPath, ILogger logger)
         {
             _logger = logger;
+
             ConfigEntries = new Dictionary<string, List<UnVersionConfigEntry>>();
 
-            var appPath = HttpRuntime.AppDomainAppPath;
-            var configFilePath = Path.Combine(appPath, @"config\unVersion.config");
+            try
+            {
+                LoadXmlConfig(configPath);
+            }
+            catch (Exception e)
+            {
+                _logger.Error<UnVersionConfig>(e, "Error when parsing unVersion.config.");
+            }
 
-            LoadXmlConfig(configFilePath);
         }
 
         private void LoadXmlConfig(string configPath)
@@ -44,7 +51,7 @@ namespace Our.Umbraco.UnVersion
                     {
                         DocTypeAlias = xmlConfigEntry.Attributes["docTypeAlias"] != null
                             ? xmlConfigEntry.Attributes["docTypeAlias"].Value
-                            : "$_ALL"
+                            : AllDocumentTypesKey //TODO: Move to constant
                     };
 
                     if (xmlConfigEntry.Attributes["rootXpath"] != null)
