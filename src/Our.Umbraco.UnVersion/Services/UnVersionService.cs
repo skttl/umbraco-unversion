@@ -1,15 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Data.SqlClient;
-using System.Data.SqlServerCe;
 using Umbraco.Core.Models;
 using Umbraco.Core.Logging;
 using Umbraco.Web;
 using System.Linq;
 using Umbraco.Core.Services;
-using Umbraco.Core.IO;
 
 namespace Our.Umbraco.UnVersion.Services
 {

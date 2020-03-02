@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Our.Umbraco.UnVersion.Services;
+﻿using Our.Umbraco.UnVersion.Services;
 using Umbraco.Core;
 using Umbraco.Core.Composing;
 

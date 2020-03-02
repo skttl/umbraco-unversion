@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Web;
 using System.Xml;
-using Umbraco.Core.IO;
 using Umbraco.Core.Logging;
 
 namespace Our.Umbraco.UnVersion
