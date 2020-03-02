@@ -11,10 +11,9 @@ namespace Our.Umbraco.UnVersion
     {
         public void Compose(Composition composition)
         {
-            composition.RegisterUnique<IUnVersionService, UnVersionService>();
-
+            composition.Register<IUnVersionConfig, UnVersionConfig>();
+            composition.Register<IUnVersionService, UnVersionService>();
             composition.Components().Append<UnVersionComponent>();
-            
         }
     }
 }

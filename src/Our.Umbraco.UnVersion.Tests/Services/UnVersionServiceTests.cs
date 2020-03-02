@@ -12,7 +12,7 @@ namespace Our.Umbraco.UnVersion.Tests.Services
         [TestMethod]
         public void GetVersions_Returns_Right_Based_On_Date()
         {
-            
+
             var config = new UnVersionConfigEntry() {MaxDays = 10};
 
             List<IContent> versions = new List<IContent>()
@@ -21,8 +21,8 @@ namespace Our.Umbraco.UnVersion.Tests.Services
                 TestHelper.GetVersionMock(2, new DateTime(2019, 12, 19)).Object, // should be deleted
                 TestHelper.GetVersionMock(3, new DateTime(2019, 12, 20)).Object // should be kept
             };
-            
-            var service = new UnVersionService(null,null,null);
+
+            var service = new UnVersionService(null,null,null,null);
 
             var res = service.GetVersionsToDelete(versions, config, new DateTime(2019, 12, 30));
 
@@ -50,7 +50,7 @@ namespace Our.Umbraco.UnVersion.Tests.Services
                 TestHelper.GetVersionMock(90, new DateTime(2019, 12, 20)).Object, // should be deleted
             };
 
-            var service = new UnVersionService(null, null,null);
+            var service = new UnVersionService(null,null, null,null);
 
             var res = service.GetVersionsToDelete(versions, config, new DateTime(2019, 12, 30));
 

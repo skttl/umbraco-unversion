@@ -4,14 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Umbraco.Core;
 using Umbraco.Core.Composing;
 using Umbraco.Core.Services.Implement;
 
 namespace Our.Umbraco.UnVersion
 {
-    public class UnVersionComposer : ComponentComposer<UnVersionComponent>
-    {
-    }
     public class UnVersionComponent : IComponent
     {
         private readonly IUnVersionService unVersionService;

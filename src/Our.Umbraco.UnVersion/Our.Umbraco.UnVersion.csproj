@@ -250,16 +250,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Bootstrap.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\VersionInfo.cs" />
     <Compile Include="Services\IUnVersionService.cs" />
     <Compile Include="Services\UnVersionService.cs" />
     <Compile Include="UnVersionComponent.cs" />
-<<<<<<< HEAD
-=======
     <Compile Include="UnVersionComposer.cs" />
->>>>>>> obviuse/v8
     <Compile Include="UnVersionConfig.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -268,12 +264,8 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
-<<<<<<< HEAD
   <ItemGroup>
   </ItemGroup>
-=======
-  <ItemGroup />
->>>>>>> obviuse/v8
   <!--<PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

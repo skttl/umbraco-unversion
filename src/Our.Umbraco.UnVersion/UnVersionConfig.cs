@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Web;
 using System.Xml;
+using Umbraco.Core.IO;
 using Umbraco.Core.Logging;
 
 namespace Our.Umbraco.UnVersion
@@ -15,7 +16,7 @@ namespace Our.Umbraco.UnVersion
 
         private ILogger _logger;
 
-        public UnVersionConfig(string configPath, ILogger logger)
+        public UnVersionConfig(ILogger logger)
         {
             _logger = logger;
 
@@ -23,7 +24,9 @@ namespace Our.Umbraco.UnVersion
 
             try
             {
-                LoadXmlConfig(configPath);
+                var appPath = HttpRuntime.AppDomainAppPath;
+                var configFilePath = Path.Combine(appPath, @"config\unVersion.config");
+                LoadXmlConfig(string.Concat(configFilePath));
             }
             catch (Exception e)
             {
@@ -51,7 +54,7 @@ namespace Our.Umbraco.UnVersion
                     {
                         DocTypeAlias = xmlConfigEntry.Attributes["docTypeAlias"] != null
                             ? xmlConfigEntry.Attributes["docTypeAlias"].Value
-                            : AllDocumentTypesKey //TODO: Move to constant
+                            : AllDocumentTypesKey
                     };
 
                     if (xmlConfigEntry.Attributes["rootXpath"] != null)
