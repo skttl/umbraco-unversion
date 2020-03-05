@@ -8,6 +8,7 @@ using System.Data.SqlServerCe;
 using System.Linq;
 using System.Net.Mime;
 using System.Reflection;
+using System.Text;
 using log4net;
 using umbraco;
 using Umbraco.Core;
@@ -22,7 +23,14 @@ namespace Our.Umbraco.UnVersion.Services
 
         private readonly IUnVersionConfig _config;
         private readonly bool _catchSqlExceptions;
-        private readonly string _ceStatementEnd = $"{Environment.NewLine}GO{Environment.NewLine}";
+
+        private readonly List<string> coreSql = new List<string>()
+        {
+            @"DELETE FROM cmsPreviewXml WHERE nodeId = {0} AND versionId NOT IN ({1});",
+            @"DELETE FROM cmsPropertyData WHERE contentNodeId = {0} AND versionId NOT IN ({1});",
+            @"DELETE FROM cmsContentVersion WHERE contentId = {0} AND versionId NOT IN ({1});",
+            @"DELETE FROM cmsDocument WHERE nodeId = {0} AND versionId NOT IN ({1});",
+        };
 
         public UnVersionService(IUnVersionConfig config, bool catchSqlExceptions)
         {
@@ -64,30 +72,94 @@ namespace Our.Umbraco.UnVersion.Services
                 if (!isValid)
                     continue;
 
-                var versionsToKeep = VersionsToKeep(content.Id, configEntry).Select(x => $"'{x.ToString("D")}'");
+                var versionsToKeep = VersionsToKeep(content.Id, configEntry).Select(ConvertToGuidString);
                 var versionsToKeepString = string.Join(",", versionsToKeep);
 
                 if (Logger.IsDebugEnabled)
                     Logger.Debug("Keeping versions " + versionsToKeepString);
 
-                var commands = new List<string>() {
-                    @"DELETE FROM cmsPreviewXml WHERE nodeId = {0} AND versionId NOT IN ({1});",
-                    @"DELETE FROM cmsPropertyData WHERE contentNodeId = {0} AND versionId NOT IN ({1});",
-                    @"DELETE FROM cmsContentVersion WHERE contentId = {0} AND versionId NOT IN ({1});",
-                    @"DELETE FROM cmsDocument WHERE nodeId = {0} AND versionId NOT IN ({1});",
-                };
-
                 if (ApplicationContext.Current.DatabaseContext.DatabaseProvider == DatabaseProviders.SqlServerCE) {
-                    foreach (var command in commands) {
+                    foreach (var command in coreSql) {
                         var formattedCmd = string.Format(command, content.Id, versionsToKeepString);
                         ApplicationContext.Current.DatabaseContext.Database.Execute(formattedCmd);
                     }
                 } else {
-                    // BH: Every other provider supports multiple statements per execution, this enables bulk execution.
-                    var bulkCommand = string.Format(string.Join(string.Empty, commands), content.Id, versionsToKeepString);
+                    var bulkCommand = string.Format(string.Join(string.Empty, coreSql), content.Id, versionsToKeepString);
                     ApplicationContext.Current.DatabaseContext.Database.Execute(bulkCommand);
                 }
             }
+        }
+
+        public void UnVersion(IEnumerable<IContent> contentToUnversion)
+        {
+            var allVersionsToKeep = new Dictionary<int, IEnumerable<Guid>>();
+            var sb = new StringBuilder();
+
+            foreach (var content in contentToUnversion)
+            {
+                var configEntries = new List<UnVersionConfigEntry>();
+
+                if (_config.ConfigEntries.ContainsKey(content.ContentType.Alias))
+                    configEntries.AddRange(_config.ConfigEntries[content.ContentType.Alias]);
+
+                if (_config.ConfigEntries.ContainsKey("$_ALL"))
+                    configEntries.AddRange(_config.ConfigEntries["$_ALL"]);
+
+                if (!configEntries.Any())
+                {
+                    if (Logger.IsDebugEnabled)
+                        Logger.Debug("No unversion configuration found for type " + content.ContentType.Alias);
+
+                    return;
+                }
+
+                foreach (var configEntry in configEntries)
+                {
+                    var isValid = true;
+
+                    if (!String.IsNullOrEmpty(configEntry.RootXPath))
+                    {
+                        if (content.Level > 1 && content.Parent() != null)
+                        {
+                            var ids = GetNodeIdsFromXpath(configEntry.RootXPath);
+                            isValid = ids.Contains(content.ParentId);
+                        }
+                    }
+
+                    if (!isValid)
+                        continue;
+
+                    var versionsToKeep = VersionsToKeep(content.Id, configEntry);
+                    allVersionsToKeep.Add(content.Id, versionsToKeep);
+                    // var versionsToKeepString = string.Join(",", versionsToKeep);
+                }
+            }
+
+            if (ApplicationContext.Current.DatabaseContext.DatabaseProvider == DatabaseProviders.SqlServerCE) {
+                foreach (var content in allVersionsToKeep) {
+                    foreach (var command in coreSql) {
+                        var versionsToKeepString = string.Join(",", content.Value.Select(ConvertToGuidString));
+                        var formattedCmd = string.Format(command, content.Key, versionsToKeepString);
+                        ApplicationContext.Current.DatabaseContext.Database.Execute(formattedCmd);
+                    }
+                }
+            } else {
+                foreach (var content in allVersionsToKeep) {
+                    var versionsToKeepString = string.Join(",", content.Value.Select(ConvertToGuidString));
+                    sb.AppendFormat(string.Join(string.Empty, coreSql), content.Key, versionsToKeepString);
+                }
+                
+                if (Logger.IsDebugEnabled && !String.IsNullOrEmpty(sb.ToString()))
+                {
+                    Logger.Debug(sb.ToString());
+                    ApplicationContext.Current.DatabaseContext.Database.Execute(sb.ToString());
+                }
+            }
+        }
+
+        private string ConvertToGuidString(Guid uid)
+        {
+            return $"'{uid.ToString("D")}'";
         }
 
         private IEnumerable<Guid> VersionsToKeep(int contentId, UnVersionConfigEntry configEntry)

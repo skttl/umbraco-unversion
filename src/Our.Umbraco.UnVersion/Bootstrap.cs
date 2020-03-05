@@ -31,10 +31,7 @@ namespace Our.Umbraco.UnVersion
             if (HttpContext.Current == null)
                 return;
 
-            foreach (var entity in e.PublishedEntities)
-            {
-                UnVersionContext.Instance.UnVersionService.UnVersion(entity);
-            }
+            UnVersionContext.Instance.UnVersionService.UnVersion(e.PublishedEntities);
         }
     }
 }
