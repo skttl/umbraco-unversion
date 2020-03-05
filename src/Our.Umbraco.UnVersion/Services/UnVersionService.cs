@@ -159,7 +159,7 @@ namespace Our.Umbraco.UnVersion.Services
 
         private string ConvertToGuidString(Guid uid)
         {
-            return $"'{uid.ToString("D")}'";
+            return string.Format("'{0}'", uid.ToString("D"));
         }
 
         private IEnumerable<Guid> VersionsToKeep(int contentId, UnVersionConfigEntry configEntry)
