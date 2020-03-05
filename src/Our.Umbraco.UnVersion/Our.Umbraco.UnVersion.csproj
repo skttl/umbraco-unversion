@@ -28,6 +28,7 @@
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
     <UseGlobalApplicationHostFile />
+    <Use64BitIISExpress />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -87,6 +88,7 @@
     <Compile Include="Services\UnVersionService.cs" />
     <Compile Include="UnVersionConfig.cs" />
     <Compile Include="UnVersionContext.cs" />
+    <Compile Include="VersionsModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Web\UI\Config\UnVersion.config" />
