@@ -18,22 +18,22 @@
 	<PropertyGroup>
 		<ProjectName>Our.Umbraco.UnVersion</ProjectName>
 		<PackageName>UnVersion</PackageName>
-		<MinUmbracoVersion>8.2.1</MinUmbracoVersion>
-		<Readme>A content un-versioning package for Umbraco 8.2+</Readme>
-		<AuthorName>Matt Brailsford, Lee Kelleher</AuthorName>
-		<AuthorUrl>https://github.com/umco/umbraco-unversion/graphs/contributors</AuthorUrl>
+		<MinUmbracoVersion>8.4.0</MinUmbracoVersion>
+		<Readme>A content un-versioning package for Umbraco 8.4+</Readme>
+		<AuthorName>Søren Kottal, Matt Brailsford, Lee Kelleher</AuthorName>
+		<AuthorUrl>https://github.com/skttl/umbraco-unversion/graphs/contributors</AuthorUrl>
 		<PackageLicenseName>MIT license</PackageLicenseName>
 		<PackageLicenseUrl>http://opensource.org/licenses/MIT</PackageLicenseUrl>
-		<ProjectUrl>https://github.com/umco/umbraco-unversion</ProjectUrl>
+		<ProjectUrl>https://github.com/skttl/umbraco-unversion</ProjectUrl>
 	</PropertyGroup>
 
 	<!-- NUGET ONLY PROPERTIES -->
 	<PropertyGroup>
 		<PackageId>Our.Umbraco.UnVersion</PackageId>
 		<NuGetPackageName>UnVersion for Umbraco</NuGetPackageName>
-		<Copyright>Copyright &#169; 2012 Matt Brailsford, Our Umbraco and other contributors</Copyright>
-		<Owners>Matt Brailsford, Lee Kelleher</Owners>
-		<IconUrl>https://raw.githubusercontent.com/umco/umbraco-unversion/master/docs/assets/img/logo.png</IconUrl>
+		<Copyright>Copyright &#169; 2020 Søren Kottal, Our Umbraco and other contributors</Copyright>
+		<Owners>Søren Kottal, Matt Brailsford, Lee Kelleher</Owners>
+		<IconUrl>https://raw.githubusercontent.com/skttl/umbraco-unversion/master/docs/assets/img/logo.png</IconUrl>
 		<Tags>umbraco versioning</Tags>
 		<Language>en-GB</Language>
 		<RequireLicenseAcceptance>false</RequireLicenseAcceptance>
