@@ -12,7 +12,7 @@ This package automaticaly removes any previous versions for those times when a v
 
 ### Installation
 
-> *Note:* UnVersion has been developed against **Umbraco v8.2.? (Pending PR)** and will support that version and above.
+> *Note:* UnVersion has been developed against **Umbraco v8.4.0** and will support that version and above.
 
 UnVersion can be installed from either Our Umbraco or NuGet package repositories, or build manually from the source-code:
 
@@ -38,7 +38,7 @@ If you prefer, you can compile UnVersion yourself, you'll need:
 
 To clone it locally click the "Clone in Windows" button above or run the following git commands.
 
-	git clone https://github.com/umco/umbraco-unversion.git umbraco-unversion
+	git clone https://github.com/skttl/umbraco-unversion.git umbraco-unversion
 	cd umbraco-unversion
 	.\build.cmd
 
@@ -64,16 +64,17 @@ Anyone and everyone is welcome to contribute. Please take a moment to review the
 Have a question?
 
 * [UnVersion Forum](https://our.umbraco.org/projects/website-utilities/unversion/bugs-feedback-and-suggestions/) on Our Umbraco
-* [Raise an issue](https://github.com/umco/umbraco-unversion/issues) on GitHub
+* [Raise an issue](https://github.com/skttl/umbraco-unversion/issues) on GitHub
 
 
 ## Dev Team
 
-* [Matt Brailsford](https://github.com/mattbrailsford)
-* [Lee Kelleher](https://github.com/leekelleher)
+* [S�ren Kottal](https://github.com/skttl)
 
 
 ## License
+
+Copyright &copy; 2020 Søren Kottal, Our Umbraco and [other contributors](https://github.com/umco/umbraco-unversion/graphs/contributors)
 
 Copyright &copy; 2012 Matt Brailsford, Our Umbraco and [other contributors](https://github.com/umco/umbraco-unversion/graphs/contributors)
 
