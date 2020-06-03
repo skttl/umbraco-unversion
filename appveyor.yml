@@ -1,3 +1,5 @@
+image: Visual Studio 2017
+
 # version format
 version: 3.0.0.{build}
 
@@ -9,8 +11,11 @@ init:
 cache:
   - src\packages -> **\packages.config  # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified
 
+before_build:
+  - nuget restore src
+
 build_script:
-- build-appveyor.cmd
+  - build-appveyor.cmd
 
 artifacts:
   - path: artifacts\*.nupkg
@@ -40,7 +45,8 @@ deploy:
 
     # NuGet Deployment for releases
   - provider: NuGet
-    server: 
+    server:
+    skip_symbols: true
     api_key:
       secure: vEophXSqus5F60LRBY4/j1l6K/S5+n3/yYpiID3O7JJW1gyj+0q0enuHhN3tgdhl
     artifact: /.*\.nupkg/
