@@ -69,7 +69,7 @@ Have a question?
 
 ## Dev Team
 
-* [S�ren Kottal](https://github.com/skttl)
+* [Søren Kottal](https://github.com/skttl)
 
 
 ## License
