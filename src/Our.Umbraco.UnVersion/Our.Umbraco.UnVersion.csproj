@@ -233,6 +233,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CleanUpTrashTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\IUnVersionService.cs" />
     <Compile Include="Services\UnVersionService.cs" />

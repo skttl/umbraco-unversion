@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Web;
 using System.Xml;
+using Umbraco.Core;
 using Umbraco.Core.Logging;
 
 namespace Our.Umbraco.UnVersion
@@ -10,15 +11,17 @@ namespace Our.Umbraco.UnVersion
     public class UnVersionConfig : IUnVersionConfig
     {
         public const string AllDocumentTypesKey = "$_ALL";
-        public IDictionary<string, List<UnVersionConfigEntry>> ConfigEntries { get; set; }
+        public IDictionary<string, List<UnVersionConfigEntry>> VersionConfigEntries { get; set; }
+		public List<UnVersionConfigEntry> TrashConfigEntries { get; set; }
 
-        private ILogger _logger;
+		private ILogger _logger;
 
         public UnVersionConfig(ILogger logger)
         {
             _logger = logger;
 
-            ConfigEntries = new Dictionary<string, List<UnVersionConfigEntry>>();
+            VersionConfigEntries = new Dictionary<string, List<UnVersionConfigEntry>>();
+            TrashConfigEntries = new List<UnVersionConfigEntry>();
 
             try
             {
@@ -64,10 +67,26 @@ namespace Our.Umbraco.UnVersion
                     if (xmlConfigEntry.Attributes["maxCount"] != null)
                         configEntry.MaxCount = Convert.ToInt32(xmlConfigEntry.Attributes["maxCount"].Value);
 
-                    if (!ConfigEntries.ContainsKey(configEntry.DocTypeAlias))
-                        ConfigEntries.Add(configEntry.DocTypeAlias, new List<UnVersionConfigEntry>());
+                    if (xmlConfigEntry.Attributes["type"] != null)
+                        configEntry.Type = xmlConfigEntry.Attributes["type"].Value.InvariantEquals("trash") ? 
+                            UnVersionConfigEntryType.Trash : 
+                            UnVersionConfigEntryType.Version;
 
-                    ConfigEntries[configEntry.DocTypeAlias].Add(configEntry);
+                    switch(configEntry.Type)
+                    {
+                        case UnVersionConfigEntryType.Trash:
+
+                            TrashConfigEntries.Add(configEntry);
+
+                            break;
+
+                        default:
+                            if (!VersionConfigEntries.ContainsKey(configEntry.DocTypeAlias))
+                                VersionConfigEntries.Add(configEntry.DocTypeAlias, new List<UnVersionConfigEntry>());
+                        
+                            VersionConfigEntries[configEntry.DocTypeAlias].Add(configEntry);
+                            break;
+                    }
                 }
             }
         }
@@ -84,10 +103,18 @@ namespace Our.Umbraco.UnVersion
         public string RootXPath { get; set; }
         public int MaxDays { get; set; }
         public int MaxCount { get; set; }
-    }
+		public UnVersionConfigEntryType Type { get; set; }
+	}
+
+    public enum UnVersionConfigEntryType
+	{
+        Version,
+        Trash
+	}
 
     public interface IUnVersionConfig
     {
-        IDictionary<string, List<UnVersionConfigEntry>> ConfigEntries { get; }
+        IDictionary<string, List<UnVersionConfigEntry>> VersionConfigEntries { get; }
+        List<UnVersionConfigEntry> TrashConfigEntries { get; set; }
     }
 }
