@@ -1,38 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
-using Umbraco.Core.Models;
-using Umbraco.Core.Logging;
-using Umbraco.Web;
 using System.Linq;
+using Umbraco.Core.Logging;
+using Umbraco.Core.Models;
+using Umbraco.Core.Persistence;
+using Umbraco.Core.Scoping;
 using Umbraco.Core.Services;
+using Umbraco.Web;
 
 namespace Our.Umbraco.UnVersion.Services
 {
-    public class UnVersionService : IUnVersionService
+	public class UnVersionService : IUnVersionService
     {
         private readonly ILogger _logger;
         private readonly IUmbracoContextFactory _context;
         private readonly IContentService _contentService;
-        private IUnVersionConfig _config;
+		private IUnVersionConfig _config;
+        private readonly IUmbracoContextFactory _umbracoContextFactory;
+        private readonly IScopeProvider _scopeProvider;
 
-        public UnVersionService(IUnVersionConfig config, ILogger logger, IUmbracoContextFactory context, IContentService contentService)
+        public UnVersionService(IUnVersionConfig config, ILogger logger, IUmbracoContextFactory context, IContentService contentService, IUmbracoContextFactory umbracoContextFactory, IScopeProvider scopeProvider)
         {
             _logger = logger;
             _config = config;
             _context = context;
             _contentService = contentService;
-        }
+            _umbracoContextFactory = umbracoContextFactory;
+            _scopeProvider = scopeProvider;
+		}
 
         public void UnVersion(IContent content)
         {
 
             var configEntries = new List<UnVersionConfigEntry>();
 
-            if (_config.ConfigEntries.ContainsKey(content.ContentType.Alias))
-                configEntries.AddRange(_config.ConfigEntries[content.ContentType.Alias]);
+            if (_config.VersionConfigEntries.ContainsKey(content.ContentType.Alias))
+                configEntries.AddRange(_config.VersionConfigEntries[content.ContentType.Alias]);
 
-            if (_config.ConfigEntries.ContainsKey(UnVersionConfig.AllDocumentTypesKey))
-                configEntries.AddRange(_config.ConfigEntries[UnVersionConfig.AllDocumentTypesKey]);
+            if (_config.VersionConfigEntries.ContainsKey(UnVersionConfig.AllDocumentTypesKey))
+                configEntries.AddRange(_config.VersionConfigEntries[UnVersionConfig.AllDocumentTypesKey]);
 
             if (configEntries.Count <= 0)
             {
@@ -40,7 +46,7 @@ namespace Our.Umbraco.UnVersion.Services
                 return;
             }
 
-            foreach (var configEntry in configEntries)
+            foreach (var configEntry in configEntries.Where(x => x.Type == UnVersionConfigEntryType.Version).ToList())
             {
                 var isValid = true;
 
@@ -81,14 +87,14 @@ namespace Our.Umbraco.UnVersion.Services
 
         }
 
-        /// <summary>
-        /// Iterates a list of IContent versions and returns items to be removed based on a configEntry.
-        /// </summary>
-        /// <param name="versions"></param>
-        /// <param name="configEntry"></param>
-        /// <param name="currentDateTime"></param>
-        /// <returns></returns>
-        public List<int> GetVersionsToDelete(List<IContent> versions, UnVersionConfigEntry configEntry, DateTime currentDateTime)
+		/// <summary>
+		/// Iterates a list of IContent versions and returns items to be removed based on a configEntry.
+		/// </summary>
+		/// <param name="versions"></param>
+		/// <param name="configEntry"></param>
+		/// <param name="currentDateTime"></param>
+		/// <returns></returns>
+		public List<int> GetVersionsToDelete(List<IContent> versions, UnVersionConfigEntry configEntry, DateTime currentDateTime)
         {
             List<int> versionIdsToDelete = new List<int>();
 
@@ -140,5 +146,62 @@ namespace Our.Umbraco.UnVersion.Services
                 return nodes.Select(x => x.Id).ToList();
             }
         }
-    }
+
+        /// <summary>
+        /// Based on configEntries, deletes items from trash if too old or too many.
+        /// </summary>
+        public void CleanUpTrash()
+        {
+            _logger.Debug<CleanUpTrashTask>("CleanupTrashTask PerformRun start");
+
+            using (var scope = _scopeProvider.CreateScope())
+            {
+                using (var umbracoContextReference = _umbracoContextFactory.EnsureUmbracoContext())
+                {
+                    foreach (var cfg in _config.TrashConfigEntries)
+                    {
+                        var query = scope.SqlContext.Query<IContent>();
+
+                        if (cfg.DocTypeAlias != UnVersionConfig.AllDocumentTypesKey)
+                        {
+                            // The query does *not* like it when asked to match ContentType.Alias directly, so we get the ID instead
+                            var contentType = umbracoContextReference.UmbracoContext.Content.GetContentType(cfg.DocTypeAlias);
+
+                            if (contentType != null)
+                            {
+                                query = query.Where(x => x.ContentTypeId.Equals(contentType.Id));
+                            }
+                        }
+
+                        if (cfg.MaxDays < int.MaxValue)
+                        {
+                            // doesn't matter if config says -10 or 10, we always need a negative number
+                            var alwaysNegative = -Math.Abs(cfg.MaxDays); 
+
+                            var minDate = DateTime.Now.AddDays(alwaysNegative);
+
+                            query = query.Where(x => x.UpdateDate < minDate);
+                        }
+
+                        // We'll not handle more than 100 nodes per cycle - if we don't handle it now, we'll get to it eventually
+                        var nodesToDelete = _contentService.GetPagedContentInRecycleBin(
+                            0,
+                            Math.Min(cfg.MaxCount, 100),
+                            out _,
+                            query,
+                            Ordering.By(nameof(IContent.UpdateDate))
+                        );
+
+                        foreach (var content in nodesToDelete)
+                        {
+                            _logger.Debug<CleanUpTrashTask>("Deleting content {contentId} from Recycle Bin", content.Id);
+
+                            _contentService.Delete(content);
+                        }
+                    }
+                }
+                scope.Complete();
+            }
+        }
+	}
 }
